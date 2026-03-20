@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Actor API</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            margin-top: 50px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px 30px;
+        }
+
+        .api-section {
+            margin-bottom: 40px;
+        }
+
+        .api-section h2 {
+            color: #4facfe;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+
+        .endpoint-box {
+            background: #f8f9fa;
+            border-left: 4px solid #4facfe;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .endpoint-box code {
+            color: #e91e63;
+            font-weight: bold;
+        }
+
+        .try-it-section {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            padding: 30px;
+            border-radius: 12px;
+            margin-top: 30px;
+        }
+
+        .try-it-section h3 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .input-group input {
+            flex: 1;
+            padding: 12px 20px;
+            border: 2px solid #ddd;
+            border-radius: 25px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .input-group input:focus {
+            border-color: #4facfe;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(79, 172, 254, 0.3);
+        }
+
+        .result-box {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            min-height: 100px;
+            display: none;
+        }
+
+        .result-box.show {
+            display: block;
+        }
+
+        .result-box pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            margin: 0;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+
+        .links-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .link-card {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            text-decoration: none;
+            color: #333;
+            font-weight: bold;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .link-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+            text-decoration: none;
+            color: #333;
+        }
+
+        .loading {
+            text-align: center;
+            color: #4facfe;
+            font-style: italic;
+        }
+
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #c62828;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin-top: 20px;
+            }
+            
+            .header {
+                padding: 30px 20px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .content {
+                padding: 30px 20px;
+            }
+            
+            .input-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎬 Movie Actor API</h1>
+            <p>Unified TMDB + Wikipedia Integration</p>
+        </div>
+        
+        <div class="content">
+            <div class="api-section">
+                <h2>📡 API Endpoint</h2>
+                <div class="endpoint-box">
+                    <strong>GET</strong> <code>/api/v1/movie-actor-summary/?movie={movieTitle}</code>
+                </div>
+                
+                <div class="try-it-section">
+                    <h3>🧪 Try It Out</h3>
+                    <div class="input-group">
+                        <input type="text" id="movieInput" placeholder="Enter movie name (e.g., Avatar, Inception, Titanic)">
+                        <button class="btn" onclick="callAPI()">Get Movie Data</button>
+                    </div>
+                    
+                    <div id="resultBox" class="result-box">
+                        <div id="loadingMessage" class="loading" style="display: none;">Loading...</div>
+                        <pre id="resultContent"></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="api-section">
+                <h2>🔗 Documentation & Tools</h2>
+                <div class="links-section">
+                    <a href="/api/docs/" class="link-card" target="_blank">
+                        📚 API Docs
+                    </a>
+                    <a href="/api/schema/" class="link-card" target="_blank">
+                        📋 API Schema
+                    </a>
+                    <a href="/admin/" class="link-card" target="_blank">
+                        ⚙️ Admin Panel
+                    </a>
+                </div>
+            </div>
+
+            <div class="api-section">
+                <h2>ℹ️ About</h2>
+                <p>This API combines data from two public sources:</p>
+                <ul style="margin: 20px 0; padding-left: 20px; line-height: 1.8;">
+                    <li><strong>TMDB</strong> - Movie information and cast data</li>
+                    <li><strong>Wikipedia</strong> - Actor biographies and additional info</li>
+                </ul>
+                <p style="margin-top: 20px;">
+                    <strong>Version:</strong> v1.0<br>
+                    <strong>Response Format:</strong> JSON<br>
+                    <strong>Error Handling:</strong> 400, 404, 500 status codes
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function callAPI() {
+            const movieInput = document.getElementById('movieInput');
+            const resultBox = document.getElementById('resultBox');
+            const resultContent = document.getElementById('resultContent');
+            const loadingMessage = document.getElementById('loadingMessage');
+            
+            const movieName = movieInput.value.trim();
+            
+            if (!movieName) {
+                showError('Please enter a movie name');
+                return;
+            }
+
+            // Show loading
+            resultBox.classList.add('show');
+            loadingMessage.style.display = 'block';
+            resultContent.textContent = '';
+            resultContent.className = '';
+
+            try {
+                const response = await fetch(`/api/v1/movie-actor-summary/?movie=${encodeURIComponent(movieName)}`);
+                const data = await response.json();
+
+                loadingMessage.style.display = 'none';
+
+                if (response.ok) {
+                    resultContent.textContent = JSON.stringify(data, null, 2);
+                    resultContent.className = '';
+                } else {
+                    showError(data.error || 'An error occurred');
+                }
+            } catch (error) {
+                loadingMessage.style.display = 'none';
+                showError('Network error: ' + error.message);
+            }
+        }
+
+        function showError(message) {
+            const resultContent = document.getElementById('resultContent');
+            const loadingMessage = document.getElementById('loadingMessage');
+            
+            loadingMessage.style.display = 'none';
+            resultContent.innerHTML = `<div class="error">❌ ${message}</div>`;
+        }
+
+        // Allow Enter key to trigger API call
+        document.getElementById('movieInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                callAPI();
+            }
+        });
+
+        // Load with example on page load
+        window.addEventListener('load', function() {
+            document.getElementById('movieInput').value = 'Avatar';
+            callAPI();
+        });
+    </script>
+</body>
+</html>
