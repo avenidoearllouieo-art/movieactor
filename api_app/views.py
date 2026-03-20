@@ -5,6 +5,7 @@ import requests
 from requests import RequestException
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 
 # Keep a local fallback for development, but prefer setting TMDB_API_KEY in your environment.
 TMDB_API_KEY = os.getenv("TMDB_API_KEY", "a06c12b8c95a73b69938cefbe9395cb6")
@@ -44,6 +45,25 @@ def wiki_page_summary(title: str) -> dict | None:
         # For Wikipedia, treat failures as "missing bio" rather than failing the whole request.
         return None
 
+@extend_schema(
+    tags=["Movie + Actor Summary"],
+    summary="Search a movie and return the top actors with Wikipedia bios",
+    parameters=[
+        OpenApiParameter(
+            name="movie",
+            type=str,
+            location=OpenApiParameter.QUERY,
+            required=True,
+            description="Movie title to search in TMDB",
+        ),
+    ],
+    responses={
+        200: dict,
+        400: dict,
+        404: dict,
+        500: dict,
+    },
+)
 @api_view(['GET'])
 def movie_actor_summary(request):
     movie_name = request.GET.get('movie')
