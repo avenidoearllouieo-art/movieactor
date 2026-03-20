@@ -84,10 +84,11 @@ def movie_actor_summary(request):
             character = actor.get('character')
 
             wiki = wiki_page_summary(actor_name)
-            actor_payload = {
-                "name": actor_name,
-                "character": character,
-            }
+            actor_payload = {}
+            if actor_name:
+                actor_payload["name"] = actor_name
+            if character:
+                actor_payload["character"] = character
 
             if wiki and wiki.get("extract"):
                 actor_payload["bio_extract"] = wiki.get("extract")
@@ -100,10 +101,15 @@ def movie_actor_summary(request):
             actors.append(actor_payload)
 
         # 3. Data Transformation (IMPORTANT)
+        rating = movie.get('vote_average')
+        rating = round(rating, 1) if isinstance(rating, (int, float)) else rating
+
         result = {
-            "movie_title": movie['title'],
-            "release_date": movie['release_date'],
-            "rating": movie['vote_average'],
+            "movie": {
+                "title": movie.get('title'),
+                "release_date": movie.get('release_date'),
+                "rating": rating,
+            },
             "top_actors": actors
         }
 
