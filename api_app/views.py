@@ -1,4 +1,5 @@
 import os
+from urllib.parse import quote
 
 import requests
 from requests import RequestException
@@ -21,6 +22,27 @@ def tmdb_get_json(url: str) -> dict:
     except (RequestException, ValueError) as exc:
         # Normalize any external failure into an exception the view can map to HTTP 500.
         raise RuntimeError("External API failed") from exc
+
+
+def wiki_page_summary(title: str) -> dict | None:
+    """
+    Fetch Wikipedia page summary for an actor.
+
+    Wikipedia is used as the second public API (actor/bio information).
+    """
+    if not title:
+        return None
+
+    url = f"https://en.wikipedia.org/api/rest_v1/page/summary/{quote(title)}"
+    try:
+        res = requests.get(url, timeout=TMDB_TIMEOUT_SECONDS)
+        if res.status_code == 404:
+            return None
+        res.raise_for_status()
+        return res.json()
+    except (RequestException, ValueError):
+        # For Wikipedia, treat failures as "missing bio" rather than failing the whole request.
+        return None
 
 @api_view(['GET'])
 def movie_actor_summary(request):
@@ -52,12 +74,30 @@ def movie_actor_summary(request):
         )
         credits_res = tmdb_get_json(credits_url)
 
+        cast = credits_res.get('cast') or []
+        if not cast:
+            return Response({"error": "Actors not found"}, status=404)
+
         actors = []
-        for actor in credits_res['cast'][:5]:  # top 5 actors
-            actors.append({
-                "name": actor['name'],
-                "character": actor['character']
-            })
+        for actor in cast[:5]:  # top 5 actors
+            actor_name = actor.get('name')
+            character = actor.get('character')
+
+            wiki = wiki_page_summary(actor_name)
+            actor_payload = {
+                "name": actor_name,
+                "character": character,
+            }
+
+            if wiki and wiki.get("extract"):
+                actor_payload["bio_extract"] = wiki.get("extract")
+                actor_payload["wikipedia_url"] = (
+                    wiki.get("content_urls", {})
+                    .get("desktop", {})
+                    .get("page")
+                )
+
+            actors.append(actor_payload)
 
         # 3. Data Transformation (IMPORTANT)
         result = {
