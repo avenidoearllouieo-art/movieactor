@@ -6,10 +6,18 @@ import requests
 from requests import RequestException
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from urllib.parse import quote
 from django.shortcuts import render
 
-API_KEY = "a06c12b8c95a73b69938cefbe9395cb6"
+TMDB_API_KEY = os.getenv('TMDB_API_KEY', "a06c12b8c95a73b69938cefbe9395cb6")
+
+def tmdb_get_json(url):
+    """Helper function to make TMDB API requests with error handling"""
+    try:
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+        return response.json()
+    except RequestException as e:
+        raise RuntimeError(f"TMDB API request failed: {str(e)}")
 
 def home(request):
     """Render the home page"""
@@ -29,7 +37,7 @@ def movie_actor_summary(request):
         # 1. Search movie
         movie_url = (
             "https://api.themoviedb.org/3/search/movie"
-            f"?api_key={TMDB_API_KEY}&query={movie_name}"
+            f"?api_key={TMDB_API_KEY}&query={quote(movie_name)}"
         )
         movie_res = tmdb_get_json(movie_url)
 
@@ -51,7 +59,7 @@ def movie_actor_summary(request):
 
         # 3. Get Wikipedia bios for top actors
         top_actors = []
-        for actor in credits_res['cast'][:5]:  # top 5 actors
+        for actor in cast[:5]:  # top 5 actors
             actor_data = {
                 "name": actor['name'],
                 "character": actor['character']
@@ -93,5 +101,5 @@ def movie_actor_summary(request):
 
         return Response(result)
 
-    except (RuntimeError, KeyError, TypeError, ValueError):
+    except (RuntimeError, KeyError, TypeError, ValueError, RequestException):
         return Response({"error": "External API failed"}, status=500)
