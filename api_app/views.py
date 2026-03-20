@@ -1,4 +1,5 @@
 import os
+import time
 from urllib.parse import quote
 
 import requests
@@ -34,16 +35,37 @@ def wiki_page_summary(title: str) -> dict | None:
     if not title:
         return None
 
-    url = f"https://en.wikipedia.org/api/rest_v1/page/summary/{quote(title)}"
-    try:
-        res = requests.get(url, timeout=TMDB_TIMEOUT_SECONDS)
-        if res.status_code == 404:
-            return None
-        res.raise_for_status()
-        return res.json()
-    except (RequestException, ValueError):
-        # For Wikipedia, treat failures as "missing bio" rather than failing the whole request.
-        return None
+    # Wikipedia may block requests that don't include a user-agent header.
+    headers = {"User-Agent": "movieactor-midterm/1.0 (Django DRF)"}
+    # Try both normal titles and underscore-style titles (some APIs are picky).
+    candidates = [title, title.replace(" ", "_")]
+
+    for candidate in candidates:
+        url = f"https://en.wikipedia.org/api/rest_v1/page/summary/{quote(candidate)}"
+
+        # Retry once for transient blocks/rate limiting.
+        for attempt in range(2):
+            try:
+                res = requests.get(url, timeout=TMDB_TIMEOUT_SECONDS, headers=headers)
+
+                if res.status_code == 404:
+                    break
+
+                if res.status_code in (403, 429) and attempt == 0:
+                    time.sleep(1.0)
+                    continue
+
+                res.raise_for_status()
+                payload = res.json()
+                return payload
+            except (RequestException, ValueError):
+                if attempt == 0:
+                    time.sleep(0.5)
+                    continue
+                break
+
+    # For Wikipedia, treat failures as "missing bio" rather than failing the whole request.
+    return None
 
 @extend_schema(
     tags=["Movie + Actor Summary"],
